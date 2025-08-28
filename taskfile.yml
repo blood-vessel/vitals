@@ -1,0 +1,5 @@
+version: '3'
+
+tasks:
+  dev: air -c .air.toml
+  dev-local: air -c .air.toml -build.args_bin "-env=.env.local"
