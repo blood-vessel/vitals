@@ -1,0 +1,15 @@
+services:
+  vitals:
+    container_name: vitals
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - ${PORT}:${PORT}
+    env_file:
+      - path: "./.env.local"
+        required: false
+    environment:
+      - PORT=${PORT}
+      - ENVIRONTMENT=${ENVIRONTMENT}
