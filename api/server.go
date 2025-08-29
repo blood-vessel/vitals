@@ -16,6 +16,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
+	"github.com/workos/workos-go/v4/pkg/sso"
 	"golang.org/x/time/rate"
 )
 
@@ -40,8 +41,13 @@ func Run(ctx context.Context, opts *RunOptions) error {
 		logger.SetLevel(log.DebugLevel)
 	}
 
+	deps := initDeps(opts.Config)
+	assert.AssertNotNil(deps)
+
 	server := newServer(
 		logger,
+		opts.Config,
+		deps,
 	)
 	assert.AssertNotNil(server)
 
@@ -66,8 +72,28 @@ func Run(ctx context.Context, opts *RunOptions) error {
 	return nil
 }
 
-func newServer(logger *log.Logger) *http.Server {
+type ServerDependencies struct {
+	SSOCient *sso.Client
+}
+
+func initDeps(config *viper.Viper) *ServerDependencies {
+	assert.AssertNotNil(config)
+
+	ssoClient := &sso.Client{
+		APIKey:   config.GetString("WORKOS_API_KEY"),
+		ClientID: config.GetString("WORKOS_CLIENT_ID"),
+	}
+
+	assert.AssertNotNil(ssoClient)
+	return &ServerDependencies{
+		SSOCient: ssoClient,
+	}
+}
+
+func newServer(logger *log.Logger, config *viper.Viper, deps *ServerDependencies) *http.Server {
+	assert.AssertNotNil(deps.SSOCient)
 	assert.AssertNotNil(logger)
+	assert.AssertNotNil(config)
 
 	e := echo.New()
 	e.IPExtractor = echo.ExtractIPDirect()
@@ -93,7 +119,7 @@ func newServer(logger *log.Logger) *http.Server {
 
 	e.Validator = &CustomValidator{validator: validator.New()}
 
-	registerRoutes(e, logger)
+	registerRoutes(e, logger, config, deps)
 
 	assert.AssertNotNil(server)
 	return server
