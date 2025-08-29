@@ -18,6 +18,6 @@ func registerRoutes(
 
 	e.GET("", func(c echo.Context) error {
 		logger.Debug("vitals")
-		return c.String(http.StatusOK, "vitals")
+		return c.String(http.StatusOK, "blood-vessel/vitals")
 	})
 }
