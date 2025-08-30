@@ -52,10 +52,10 @@ func Run(ctx context.Context, opts *RunOptions) error {
 	assert.AssertNotNil(server)
 
 	go func() {
-		log.Info("Serving")
+		log.Info("serving")
 		err := server.Serve(opts.Listener)
 		if err != nil && err != http.ErrServerClosed {
-			logger.Fatal("Received error from http server", "err", err)
+			logger.Fatal("received error from http server", "err", err)
 		}
 	}()
 
