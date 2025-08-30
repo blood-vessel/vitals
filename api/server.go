@@ -73,7 +73,7 @@ func Run(ctx context.Context, opts *RunOptions) error {
 }
 
 type ServerDependencies struct {
-	SSOCient *sso.Client
+	SSOClient *sso.Client
 }
 
 func initDeps(config *viper.Viper) *ServerDependencies {
@@ -87,7 +87,7 @@ func initDeps(config *viper.Viper) *ServerDependencies {
 	assert.AssertNotNil(ssoClient.APIKey)
 	assert.AssertNotNil(ssoClient.ClientID)
 	return &ServerDependencies{
-		SSOCient: ssoClient,
+		SSOClient: ssoClient,
 	}
 }
 

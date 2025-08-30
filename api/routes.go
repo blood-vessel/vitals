@@ -26,8 +26,8 @@ func registerRoutes(
 		return c.String(http.StatusOK, "blood-vessel/vitals")
 	})
 
-	e.GET("/login", handleLoginRedirect(logger, deps.SSOCient, config))
-	e.GET("/auth/callback", handleAuthCallback(logger, deps.SSOCient))
+	e.GET("/login", handleLoginRedirect(logger, deps.SSOClient, config))
+	e.GET("/auth/callback", handleAuthCallback(logger, deps.SSOClient))
 }
 
 func bindAndValidate[T any](c echo.Context) (*T, error) {
