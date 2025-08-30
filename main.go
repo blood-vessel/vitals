@@ -46,6 +46,6 @@ func main() {
 		Config:   config,
 	}
 	if err := api.Run(ctx, opts); err != nil {
-		log.Fatal("Failed to run", "err", err)
+		log.Fatal("failed to run", "err", err)
 	}
 }

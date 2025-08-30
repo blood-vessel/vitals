@@ -34,7 +34,7 @@ func handleLoginRedirect(logger *log.Logger, ssoClient *sso.Client, config *vipe
 			return c.NoContent(http.StatusInternalServerError)
 		}
 
-		stateCookie := &http.Cookie{
+		c.SetCookie(&http.Cookie{
 			Name:     oauthStateCookieName,
 			Value:    state,
 			Path:     "/",
@@ -42,8 +42,7 @@ func handleLoginRedirect(logger *log.Logger, ssoClient *sso.Client, config *vipe
 			Secure:   true,
 			SameSite: http.SameSiteLaxMode,
 			MaxAge:   300, // 5 minutes
-		}
-		http.SetCookie(c.Response(), stateCookie)
+		})
 
 		return c.Redirect(http.StatusFound, url.String())
 	}
@@ -87,7 +86,15 @@ func handleAuthCallback(logger *log.Logger, ssoClient *sso.Client) echo.HandlerF
 			return c.NoContent(http.StatusBadRequest)
 		}
 
-		logger.Debug(st.Value, req.State)
+		c.SetCookie(&http.Cookie{
+			Name:     oauthStateCookieName,
+			Value:    "",
+			Path:     "/",
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteLaxMode,
+			MaxAge:   -1,
+		})
 
 		ctx, cancel := context.WithTimeout(c.Request().Context(), 10*time.Second)
 		defer cancel()
