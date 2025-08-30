@@ -91,9 +91,9 @@ func initDeps(config *viper.Viper) *ServerDependencies {
 }
 
 func newServer(logger *log.Logger, config *viper.Viper, deps *ServerDependencies) *http.Server {
-	assert.AssertNotNil(deps.SSOCient)
 	assert.AssertNotNil(logger)
 	assert.AssertNotNil(config)
+	assert.AssertNotNil(deps)
 
 	e := echo.New()
 	e.IPExtractor = echo.ExtractIPDirect()
