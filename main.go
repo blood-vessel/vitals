@@ -33,20 +33,19 @@ func main() {
 
 	config.SetDefault("PORT", 8080)
 	port := config.GetInt("PORT")
-	log.Info("Listening", "port", port)
+	log.Info("listening", "port", port)
 	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
-		log.Fatal("Failed to listen", "err", err)
+		log.Fatal("failed to listen", "err", err)
 	}
 
+	ctx := context.Background()
 	opts := &api.RunOptions{
 		Writer:   os.Stdout,
 		Listener: ln,
 		Config:   config,
 	}
-
-	ctx := context.Background()
 	if err := api.Run(ctx, opts); err != nil {
-		log.Fatal("Failed to run", "err", err)
+		log.Fatal("failed to run", "err", err)
 	}
 }

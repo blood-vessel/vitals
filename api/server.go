@@ -40,16 +40,21 @@ func Run(ctx context.Context, opts *RunOptions) error {
 		logger.SetLevel(log.DebugLevel)
 	}
 
+	deps := initDeps(opts.Config)
+	assert.AssertNotNil(deps)
+
 	server := newServer(
 		logger,
+		opts.Config,
+		deps,
 	)
 	assert.AssertNotNil(server)
 
 	go func() {
-		log.Info("Serving")
+		log.Info("serving")
 		err := server.Serve(opts.Listener)
 		if err != nil && err != http.ErrServerClosed {
-			logger.Fatal("Received error from http server", "err", err)
+			logger.Fatal("received error from http server", "err", err)
 		}
 	}()
 
@@ -66,8 +71,19 @@ func Run(ctx context.Context, opts *RunOptions) error {
 	return nil
 }
 
-func newServer(logger *log.Logger) *http.Server {
+type ServerDependencies struct {
+}
+
+func initDeps(config *viper.Viper) *ServerDependencies {
+	assert.AssertNotNil(config)
+
+	return &ServerDependencies{}
+}
+
+func newServer(logger *log.Logger, config *viper.Viper, deps *ServerDependencies) *http.Server {
 	assert.AssertNotNil(logger)
+	assert.AssertNotNil(config)
+	assert.AssertNotNil(deps)
 
 	e := echo.New()
 	e.IPExtractor = echo.ExtractIPDirect()
@@ -93,7 +109,7 @@ func newServer(logger *log.Logger) *http.Server {
 
 	e.Validator = &CustomValidator{validator: validator.New()}
 
-	registerRoutes(e, logger)
+	registerRoutes(e, logger, config, deps)
 
 	assert.AssertNotNil(server)
 	return server

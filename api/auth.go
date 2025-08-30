@@ -1,0 +1,100 @@
+package api
+
+import (
+	"crypto/rand"
+	"net/http"
+	"net/url"
+
+	"github.com/blood-vessel/vitals/assert"
+	"github.com/charmbracelet/log"
+	"github.com/labstack/echo/v4"
+	"github.com/spf13/viper"
+)
+
+const oauthStateCookieName = "oauth_state"
+
+type GetAuthorizationURLFunc func(redirectURI string, state string) (*url.URL, error)
+
+type SSOAuthURLGetter interface {
+	GetAuthorizationURL(redirectURI string, state string) (*url.URL, error)
+}
+
+func handleLoginRedirect(logger *log.Logger, ssoClient SSOAuthURLGetter, config *viper.Viper) echo.HandlerFunc {
+	assert.AssertNotNil(logger)
+	assert.AssertNotNil(ssoClient)
+	assert.AssertNotNil(config)
+
+	authCallbackURI := config.GetString("AUTH_CALLBACK")
+	assert.AssertNotEmpty(authCallbackURI)
+	return func(c echo.Context) error {
+		state := rand.Text()
+		url, err := ssoClient.GetAuthorizationURL(authCallbackURI, state)
+		if err != nil {
+			logger.Error("sso get auth url", "err", err)
+			return c.NoContent(http.StatusInternalServerError)
+		}
+
+		c.SetCookie(&http.Cookie{
+			Name:     oauthStateCookieName,
+			Value:    state,
+			Path:     "/",
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteLaxMode,
+			MaxAge:   300, // 5 minutes
+		})
+
+		return c.Redirect(http.StatusFound, url.String())
+	}
+}
+
+func handleAuthCallback(logger *log.Logger) echo.HandlerFunc {
+	assert.AssertNotNil(logger)
+	type request struct {
+		Code  string `query:"code" validate:"max=1024"`
+		State string `query:"state" validate:"required,max=256"`
+		Error string `query:"error_description" validate:"max=2048"`
+	}
+	return func(c echo.Context) error {
+		req, err := bindAndValidate[request](c)
+		if err != nil {
+			return err
+		}
+
+		if req.Error != "" {
+			logger.Warn("oauth error [error_description]", "err", req.Error)
+			return c.NoContent(http.StatusBadRequest)
+		}
+
+		if req.Code == "" {
+			logger.Warn("oauth error: no code returned from auth")
+			return c.NoContent(http.StatusBadRequest)
+		}
+
+		st, err := c.Cookie(oauthStateCookieName)
+		if err != nil {
+			logger.Warn("err returning oauth state cookie", "err", err)
+			return c.NoContent(http.StatusBadRequest)
+		}
+		if st == nil {
+			logger.Warn("invalid oauth state: no cookie found")
+			return c.NoContent(http.StatusBadRequest)
+		}
+		if st.Value == "" || st.Value != req.State {
+			logger.Warn("invalid oauth state: value does not match")
+			return c.NoContent(http.StatusBadRequest)
+		}
+
+		c.SetCookie(&http.Cookie{
+			Name:     oauthStateCookieName,
+			Value:    "",
+			Path:     "/",
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteLaxMode,
+			MaxAge:   -1,
+		})
+
+		return c.Redirect(http.StatusFound, "/")
+	}
+}
