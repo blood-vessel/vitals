@@ -25,9 +25,6 @@ func registerRoutes(
 		logger.Debug("vitals")
 		return c.String(http.StatusOK, "blood-vessel/vitals")
 	})
-
-	e.GET("/login", handleLoginRedirect(logger, deps.SSOClient, config))
-	e.GET("/auth/callback", handleAuthCallback(logger, deps.SSOClient))
 }
 
 func bindAndValidate[T any](c echo.Context) (*T, error) {

@@ -16,7 +16,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
-	"github.com/workos/workos-go/v4/pkg/sso"
 	"golang.org/x/time/rate"
 )
 
@@ -73,22 +72,12 @@ func Run(ctx context.Context, opts *RunOptions) error {
 }
 
 type ServerDependencies struct {
-	SSOClient *sso.Client
 }
 
 func initDeps(config *viper.Viper) *ServerDependencies {
 	assert.AssertNotNil(config)
 
-	ssoClient := &sso.Client{
-		APIKey:   config.GetString("WORKOS_API_KEY"),
-		ClientID: config.GetString("WORKOS_CLIENT_ID"),
-	}
-
-	assert.AssertNotNil(ssoClient.APIKey)
-	assert.AssertNotNil(ssoClient.ClientID)
-	return &ServerDependencies{
-		SSOClient: ssoClient,
-	}
+	return &ServerDependencies{}
 }
 
 func newServer(logger *log.Logger, config *viper.Viper, deps *ServerDependencies) *http.Server {
