@@ -84,7 +84,8 @@ func initDeps(config *viper.Viper) *ServerDependencies {
 		ClientID: config.GetString("WORKOS_CLIENT_ID"),
 	}
 
-	assert.AssertNotNil(ssoClient)
+	assert.AssertNotNil(ssoClient.APIKey)
+	assert.AssertNotNil(ssoClient.ClientID)
 	return &ServerDependencies{
 		SSOCient: ssoClient,
 	}
